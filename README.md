@@ -20,6 +20,14 @@
 
 ## Tech Stack
 
+Language : Python
+
+Framework : FastAPI
+
+DataBase : PostgreSQL
+
+Convention Rule : 
+
 ### Development Environment
 
 ## Service Architecture
