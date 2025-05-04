@@ -1,0 +1,8 @@
+fastapi
+fastmcp
+uvicorn
+sqlalchemy
+pydantic
+python-dotenv
+httpx
+qrcode
