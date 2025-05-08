@@ -16,6 +16,7 @@ def test_signup_user_success(client, db_session):
     assert data["email"] == "test1@test.com"
     assert "password" not in data
 
+    
 def test_register_user_duplicate_username(client, db_session):
     # given
     client.post("/api/v1/users/register", json={

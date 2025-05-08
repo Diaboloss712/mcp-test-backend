@@ -13,6 +13,7 @@ engine = create_engine(DATABASE_URL, echo=False)
 
 @pytest.fixture(autouse=True)
 def clean_db():
+
     SQLModel.metadata.drop_all(engine)
     SQLModel.metadata.create_all(engine)
 
