@@ -1,6 +1,7 @@
 from sqlmodel import SQLModel, Field, Relationship
-from typing import Optional, List
-from datetime import datetime
+from typing import Optional
+from datetime import datetime, timezone
+from typing import Annotated
 
 
 class User(SQLModel, table=True):
@@ -11,7 +12,8 @@ class User(SQLModel, table=True):
     email: str = Field(max_length=100, nullable=False, unique=True)
     password: str = Field(nullable=False, max_length=255)
     is_admin: bool = Field(default=False)
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    provider: Optional[str] = None
+    created_at: Annotated[datetime, Field(default_factory=lambda: datetime.now(timezone.utc))]
 
     # 아래는 외래키
     # problems: List["Problem"] = Relationship(back_populates="created_by_user")
