@@ -50,7 +50,6 @@ python-multipart==0.0.20
 rsa==4.9.1
 six==1.17.0
 sqlmodel==0.0.24
-sse-starlette==2.3.3
 typing-extensions==4.13.2
 typing-inspection==0.4.0
 uvicorn==0.34.2
