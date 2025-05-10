@@ -1,10 +1,10 @@
 from fastapi import FastAPI
 from app.db.session import engine as async_engine
 from app.db.base import Base
-from app.models import category, problem
 from app.api.v1 import problem, category, comment, review, user, auth
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
+from app.api.v1 import problem
 from dotenv import load_dotenv
 import os
 
@@ -34,9 +34,7 @@ app.add_middleware(
 # app.include_router(comment.router, prefix="/api/v1/comments", tags=["Comments"])
 # app.include_router(review.router, prefix="/api/v1/review", tags=["Review"])
 
-# 설명 필요
-# from app.api.v1 import problem as problem_router
-# app.include_router(problem_router.router, prefix="/api/v1/problems", tags=["Problems"])
+app.include_router(problem.router, prefix="/api/v1/problems", tags=["Problems"])
 
 @app.on_event("startup")
 async def on_startup():
