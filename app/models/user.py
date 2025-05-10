@@ -10,7 +10,7 @@ class User(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     username: str = Field(max_length=30, nullable=False, unique=True)
     email: str = Field(max_length=100, nullable=False, unique=True)
-    password: str = Field(nullable=False, max_length=255)
+    password: Optional[str] = Field(default=None, nullable=True)
     is_admin: bool = Field(default=False)
     provider: Optional[str] = None
     created_at: Annotated[datetime, Field(default_factory=lambda: datetime.now(timezone.utc))]

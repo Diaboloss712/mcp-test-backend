@@ -11,16 +11,16 @@ SESSION_SECRET_KEY = os.getenv("SESSION_SECRET_KEY")
 app = FastAPI()
 
 app.add_middleware(
-    SessionMiddleware,
-    secret_key=SESSION_SECRET_KEY
-)
-
-app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+)
+
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=SESSION_SECRET_KEY
 )
 
 app.include_router(user.router, prefix="/api/v1/users", tags=["Users"])
