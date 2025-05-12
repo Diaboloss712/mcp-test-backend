@@ -1,78 +1,113 @@
 from typing import Optional
-from app.models.user import User
-from app.schemas.user import UserCreate, UserSocialCreate
-from app.core.security import hash_password
-from sqlmodel import Session, select
 from fastapi import HTTPException, status
-from app.core.security import verify_password
-from datetime import datetime, timezone
+from app.core.security import verify_password, hash_password, create_access_token
+from app.core.oauth2_config import PROVIDER_CONFIG
+from app.models.user import User
+from app.schemas.user import UserCreate, UserUpdate, UserSocialCreate
+from app.crud.user import (
+    get_user_by_username,
+    get_user_by_email,
+    create_user,
+    update_user_fields
+)
+import httpx
+from sqlmodel import Session
 
 
-def get_user_by_username(db: Session, username: str) -> User:
-    return db.exec(select(User).where(User.username == username)).first()
+def login_service(form_data, db: Session):
+    user = authenticate_user(db, form_data.username, form_data.password)
+    token = create_access_token({"sub": str(user.id), "username": user.username})
+    return {"access_token": token, "token_type": "bearer"}
 
+async def social_login_service(payload, db: Session):
+    config = PROVIDER_CONFIG.get(payload.provider)
+    if not config:
+        raise HTTPException(status_code=400, detail="Unsupported provider")
 
-def get_user_by_email(db: Session, email: str) -> User:
-    return db.exec(select(User).where(User.email == email)).first()
-
-
-def create_user( register_user: UserCreate, db: Session) -> User:
-    if get_user_by_username(db,  register_user.username):
-        raise HTTPException(status_code=400, detail="Username already taken")
-    if get_user_by_email(db,  register_user.email):
-        raise HTTPException(status_code=400, detail="Email already taken")
-
-    user = _build_user_model(
-        email= register_user.email,
-        username= register_user.username,
-        password=hash_password( register_user.password)
-    )
-
-    db.add(user)
-    db.commit()
-    db.refresh(user)
-    return user
-
-def authenticate_user(db: Session, username: str, password: str) -> User:
-    user = get_user_by_username(db, username)
-    if not user or not verify_password(password, user.password):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password"
+    async with httpx.AsyncClient() as client:
+        token_res = await client.post(
+            config["token_url"],
+            data={
+                "grant_type": "authorization_code",
+                "client_id": config["client_id"],
+                "client_secret": config["client_secret"],
+                "redirect_uri": f"http://localhost:5173/callback?provider={payload.provider}",
+                "code": payload.code,
+            },
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
         )
-    return user
 
-def get_user_from_social_or_fail(
-    user_info: dict,
-    provider: str,
-    db: Session
-) -> User:
-    email = user_info.get("email")
+    if token_res.status_code != 200:
+        raise HTTPException(status_code=400, detail="토큰 요청 실패")
+
+    token_json = token_res.json()
+    access_token = token_json.get("access_token")
+    if not access_token:
+        raise HTTPException(status_code=400, detail="access_token 없음")
+
+    async with httpx.AsyncClient() as client:
+        userinfo_res = await client.get(
+            config["userinfo_url"],
+            headers={"Authorization": f"Bearer {access_token}"}
+        )
+
+    userinfo = userinfo_res.json()
+    email = extract_email(payload.provider, userinfo)
     if not email:
-        raise HTTPException(status_code=400, detail="Email is required")
+        raise HTTPException(status_code=400, detail="이메일 없음")
 
-    user = db.exec(select(User).where(User.email == email)).first()
-
+    user = get_user_by_email(db, email)
     if not user:
-        raise HTTPException(status_code=404, detail=f"No account linked to {provider}")
+        raise HTTPException(status_code=404, detail="User not registered")
 
-    return user
+    return {"access_token": create_access_token({"sub": user.id, "username": user.username})}
+
+def register_user_service(register_user: UserCreate, db: Session) -> User:
+    if get_user_by_username(db, register_user.username):
+        raise HTTPException(status_code=400, detail="Username already taken")
+    if get_user_by_email(db, register_user.email):
+        raise HTTPException(status_code=400, detail="Email already taken")
+    user = _build_user_model(
+        email=register_user.email,
+        username=register_user.username,
+        password=hash_password(register_user.password)
+    )
+    return create_user(user, db)
 
 def create_user_from_social_info(register_user: UserSocialCreate, db: Session) -> User:
     if get_user_by_email(db, register_user.email):
         raise HTTPException(status_code=400, detail="User already exists")
-
     user = _build_user_model(
-        email= register_user.email,
-        username= register_user.username,
-        provider= register_user.provider,
+        email=register_user.email,
+        username=register_user.username,
+        provider=register_user.provider,
         password=""
     )
+    return create_user(user, db)
 
-    db.add(user)
-    db.commit()
-    db.refresh(user)
+def authenticate_user(db: Session, username: str, password: str) -> User:
+    user = get_user_by_username(db, username)
+    if not user or not verify_password(password, user.password):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect username or password")
     return user
+
+def update_profile_service(update_data: UserUpdate, user: User, db: Session):
+    fields = update_data.model_dump(exclude_unset=True)
+    return update_user_fields(user, fields, db)
+
+def get_profile_service(user: User):
+    return user
+
+def extract_email(provider: str, userinfo: dict) -> Optional[str]:
+    if provider == "google":
+        return userinfo.get("email")
+    elif provider == "github":
+        return userinfo.get("email") or userinfo.get("login") + "@github.com"
+    elif provider == "kakao":
+        return userinfo.get("kakao_account", {}).get("email")
+    elif provider == "naver":
+        return userinfo.get("response", {}).get("email")
+    return None
 
 def _build_user_model(
     email: str,
