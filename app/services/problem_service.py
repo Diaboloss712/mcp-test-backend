@@ -2,7 +2,7 @@ from app.llm.client import call_llm_generate_problem
 from app.schemas.problem import ProblemOut, ProblemCreate
 from app.crud.problem import create_problem
 from app.crud.category import get_or_create_category
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlmodel.ext.asyncio.session import AsyncSession
 
 async def generate_problem_from_prompt(prompt: str, db: AsyncSession) -> ProblemOut:
     llm_response = await call_llm_generate_problem(prompt)

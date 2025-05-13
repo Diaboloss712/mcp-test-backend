@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlmodel.ext.asyncio.session import AsyncSession
 from app.schemas.problem import ProblemPrompt, ProblemOut
 from app.db.session import get_db
 from app.services.problem_service import generate_problem_from_prompt

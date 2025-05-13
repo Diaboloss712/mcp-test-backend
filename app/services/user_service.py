@@ -12,10 +12,11 @@ from app.crud.user import (
 )
 import httpx
 from sqlmodel import Session
+from sqlmodel.ext.asyncio.session import AsyncSession
 
 
-def login_service(form_data, db: Session):
-    user = authenticate_user(db, form_data.username, form_data.password)
+async def login_service(form_data, db: AsyncSession):
+    user = await authenticate_user(db, form_data.username, form_data.password)
     token = create_access_token({"sub": str(user.id), "username": user.username})
     return {"access_token": token, "token_type": "bearer"}
 
@@ -52,30 +53,30 @@ async def social_login_service(payload, db: Session):
         )
 
     userinfo = userinfo_res.json()
-    email = extract_email(payload.provider, userinfo)
+    email = await extract_email(payload.provider, userinfo)
     if not email:
         raise HTTPException(status_code=400, detail="이메일 없음")
 
-    user = get_user_by_email(db, email)
+    user = await get_user_by_email(db, email)
     if not user:
         raise HTTPException(status_code=404, detail="User not registered")
 
     return {"access_token": create_access_token({"sub": user.id, "username": user.username})}
 
-def register_user_service(register_user: UserCreate, db: Session) -> User:
-    if get_user_by_username(db, register_user.username):
+async def register_user_service(register_user: UserCreate, db: AsyncSession) -> User:
+    if await get_user_by_username(db, register_user.username):
         raise HTTPException(status_code=400, detail="Username already taken")
-    if get_user_by_email(db, register_user.email):
+    if await get_user_by_email(db, register_user.email):
         raise HTTPException(status_code=400, detail="Email already taken")
     user = _build_user_model(
         email=register_user.email,
         username=register_user.username,
         password=hash_password(register_user.password)
     )
-    return create_user(user, db)
+    return await create_user(user, db)
 
-def create_user_from_social_info(register_user: UserSocialCreate, db: Session) -> User:
-    if get_user_by_email(db, register_user.email):
+async def register_user_from_social_info(register_user: UserSocialCreate, db: AsyncSession) -> User:
+    if await get_user_by_email(db, register_user.email):
         raise HTTPException(status_code=400, detail="User already exists")
     user = _build_user_model(
         email=register_user.email,
@@ -83,19 +84,19 @@ def create_user_from_social_info(register_user: UserSocialCreate, db: Session) -
         provider=register_user.provider,
         password=""
     )
-    return create_user(user, db)
+    return await create_user(user, db)
 
-def authenticate_user(db: Session, username: str, password: str) -> User:
-    user = get_user_by_username(db, username)
+async def authenticate_user(db: AsyncSession, username: str, password: str) -> User:
+    user = await get_user_by_username(db, username)
     if not user or not verify_password(password, user.password):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect username or password")
     return user
 
-def update_profile_service(update_data: UserUpdate, user: User, db: Session):
+async def update_profile_service(update_data: UserUpdate, user: User, db: AsyncSession):
     fields = update_data.model_dump(exclude_unset=True)
-    return update_user_fields(user, fields, db)
+    return await update_user_fields(user, fields, db)
 
-def get_profile_service(user: User):
+async def get_profile_service(user: User):
     return user
 
 def extract_email(provider: str, userinfo: dict) -> Optional[str]:

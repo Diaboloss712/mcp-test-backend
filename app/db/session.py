@@ -1,19 +1,25 @@
 # app/db/session.py
-from sqlmodel import create_engine, Session
 import os
-from dotenv import load_dotenv
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
-from sqlalchemy.orm import declarative_base
-
-load_dotenv()
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
+from sqlalchemy.pool import NullPool
+from sqlmodel.ext.asyncio.session import AsyncSession
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 
-engine = create_async_engine(DATABASE_URL, echo=True)
-async_session = async_sessionmaker(bind=engine, expire_on_commit=False)
-Base = declarative_base()
+# 1) SQLAlchemy 비동기 엔진에 poolclass=NullPool 추가
+engine = create_async_engine(
+    DATABASE_URL,
+    echo=True,
+    poolclass=NullPool,   # ← 여기를 추가
+)
 
-# FastAPI dependency
+# 2) SQLModel AsyncSession
+SessionFactory = async_sessionmaker(
+    engine,
+    class_=AsyncSession,
+    expire_on_commit=False,
+)
+
 async def get_db():
-    async with async_session() as session:
+    async with SessionFactory() as session:
         yield session
