@@ -1,17 +1,40 @@
-from app.schemas.user import UserCreate
-from app.services.user_service import register_user_service, get_user_by_username
+import pytest
+
+from app.schemas.user import UserCreate, UserSocialCreate
+from app.services.user_service import (
+    register_user_from_social_info,
+    register_user_service,
+    get_user_by_username
+)
 from app.models.user import User
 
-def test_create_user_success(db_session):
-    register_user = UserCreate(
+@pytest.mark.anyio
+async def test_create_user_success(db_session):
+    register_dto = UserCreate(
         username="test123",
         email="test123@mail.com",
         password="test123"
     )
-    user = register_user_service(register_user, db_session)
+    user = await register_user_service(register_dto, db_session)
 
     assert isinstance(user, User)
     assert user.username == "test123"
     assert user.email == "test123@mail.com"
     assert user.password != "test123"
-    assert get_user_by_username(db_session, "test123") is not None
+    found = await get_user_by_username(db_session, "test123")
+    assert found is not None
+
+@pytest.mark.anyio
+async def test_register_user_from_social_info(db_session):
+    user_data = {
+        "email": "test@gmail.com",
+        "username": "Test User",
+        "provider": "google"
+    }
+    register_dto = UserSocialCreate(**user_data)
+
+    user = await register_user_from_social_info(register_dto, db_session)
+    assert user.email == "test@gmail.com"
+    assert user.username == "Test User"
+    assert user.password == ""
+    assert user.is_admin is False
