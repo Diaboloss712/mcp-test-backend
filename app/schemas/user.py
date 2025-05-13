@@ -11,12 +11,12 @@ class UserCreate(UserBase):
     password: str
 
 class UserSocialCreate(UserBase):
-    password: Optional[str] = None
     provider: Literal["google", "kakao", "naver", "github"]
 
 class UserRead(UserBase):
     id: int
     is_admin: bool
+    provider: Optional[str]
     created_at: datetime
 
 class UserUpdate(SQLModel):
