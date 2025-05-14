@@ -4,7 +4,6 @@ from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 from app.models.user import User
 
-
 async def get_user_by_username(db: AsyncSession, username: str) -> Optional[User]:
     q = select(User).where(User.username == username)
     result = await db.exec(q)
@@ -19,9 +18,9 @@ async def get_user_by_email(db: AsyncSession, email: str) -> Optional[User]:
 
 async def create_user(user: User, db: AsyncSession) -> User:
     db.add(user)
-    await db.flush()     # INSERT 반영
-    await db.commit()    # 커밋
-    return user          # 속성이 살아 있음 (expire_on_commit=False)
+    await db.flush()
+    await db.commit()
+    return user
 
 
 async def update_user_fields(user: User, fields: dict, db: AsyncSession) -> User:

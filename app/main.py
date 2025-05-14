@@ -1,6 +1,7 @@
 from dotenv import load_dotenv
 load_dotenv(override=True, encoding="utf-8")
 
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from app.db.session import engine as async_engine
 from app.db.base import Base
@@ -11,7 +12,17 @@ import os
 
 SESSION_SECRET_KEY = os.getenv("SESSION_SECRET_KEY")
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    async with async_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    
+    yield
+    
+    await async_engine.dispose()
+
+
+app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -36,7 +47,3 @@ app.include_router(auth.router, prefix="/api/v1/oauth2", tags=["OAuth2"])
 
 # app.include_router(problem.router, prefix="/api/v1/problems", tags=["Problems"])
 
-@app.on_event("startup")
-async def on_startup():
-    async with async_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)

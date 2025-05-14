@@ -3,8 +3,9 @@ from app.schemas.problem import ProblemOut, ProblemCreate
 from app.crud.problem import create_problem
 from app.crud.category import get_or_create_category
 from sqlmodel.ext.asyncio.session import AsyncSession
+from app.db.session import get_db
 
-async def generate_problem_from_prompt(prompt: str, db: AsyncSession) -> ProblemOut:
+async def generate_problem_from_prompt(prompt: str, db: AsyncSession = get_db()) -> ProblemOut:
     llm_response = await call_llm_generate_problem(prompt)
     category = await get_or_create_category(db, llm_response["category"])
 
