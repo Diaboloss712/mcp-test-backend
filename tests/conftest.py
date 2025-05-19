@@ -12,6 +12,10 @@ from app.db.session import get_db as app_get_db
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 
+@pytest.fixture(scope="session")
+def anyio_backend():
+    return "asyncio"
+
 @pytest.fixture(scope="function")
 async def engine():
     test_engine = create_async_engine(
