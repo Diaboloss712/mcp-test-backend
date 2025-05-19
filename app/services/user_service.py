@@ -14,7 +14,6 @@ import httpx
 from sqlmodel import Session
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-
 async def login_service(form_data, db: AsyncSession):
     user = await authenticate_user(db, form_data.username, form_data.password)
     token = create_access_token({"sub": str(user.id), "username": user.username})
