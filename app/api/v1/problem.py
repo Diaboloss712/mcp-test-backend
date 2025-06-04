@@ -20,3 +20,21 @@ async def mock_exam_by_title(
 ):
     path_list = path.split("/")
     return await get_mock_exam_by_category_path(db, path_list, count)
+
+@router.post("/problems/", response_model=ProblemRead)
+async def create_problem_with_check(
+    problem_in: ProblemCreate,
+    db: AsyncSession = Depends(get_db),
+):
+    # 1. 임베딩 추출
+    embedding = get_embedding_from_clova(problem_in.content)
+
+    # 2. 유사도 검사
+    is_duplicate = await is_similar_problem_exist(db, problem_in.category_id, embedding)
+    if is_duplicate:
+        raise HTTPException(status_code=400, detail="해당 카테고리에 너무 유사한 문제가 존재합니다.")
+
+    # 3. 문제 생성 (벡터 포함)
+    problem_data = problem_in.dict()
+    problem_data["embedding"] = embedding
+    return await create_problem(db, ProblemCreate(**problem_data))

@@ -5,6 +5,7 @@ from app.models.category import Category
 from app.models.problem import Problem
 from sqlalchemy import select, func
 
+
 # 새로운 문제를 DB에 저장 
 async def create_problem(db: AsyncSession, problem_data: ProblemCreate) -> Problem:
     problem = Problem(**problem_data.dict())
@@ -52,3 +53,16 @@ async def get_mock_exam_by_category_path(db, path: list[str], count: int):
     )
     result = await db.execute(stmt)
     return result.scalars().all()
+
+# 문제 유사도 제한
+SIMILARITY_LIMIT = 0.9
+
+async def is_similar_problem_exist(db, category_id: int, embedding: list[float]) -> bool:
+    stmt = (
+        select(Problem)
+        .where(Problem.category_id == category_id)
+        .where(func.cosine_distance(Problem.embedding, embedding) < (1 - SIMILARITY_LIMIT))
+        .order_by(func.cosine_distance(Problem.embedding, embedding))
+    )
+    result = await db.execute(stmt)
+    return result.scalars().first() is not None

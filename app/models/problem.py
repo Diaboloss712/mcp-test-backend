@@ -1,7 +1,9 @@
 from sqlmodel import Column, Integer, String, ForeignKey, Text, DateTime, Enum as SqlEnum, func
 from sqlalchemy.orm import relationship
 from app.db.base import Base
+from pgvector.sqlalchemy import Vector
 import enum
+
 
 class ProblemType(str, enum.Enum):
     select = "select"
@@ -13,6 +15,7 @@ class Problem(Base):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String(100), nullable=False)
     content = Column(Text, nullable=False)
+    embedding = Column(Vector(1024))
     type = Column(SqlEnum(ProblemType), nullable=False)
     answer = Column(String(50), nullable=False)
     created_at = Column(DateTime, server_default=func.now())
