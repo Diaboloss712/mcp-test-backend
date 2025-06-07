@@ -3,6 +3,7 @@ from sqlalchemy.orm import relationship
 from app.db.base import Base
 import enum
 
+
 class ProblemType(str, enum.Enum):
     select = "select"
     write = "write"
@@ -16,6 +17,6 @@ class Problem(Base):
     type = Column(SqlEnum(ProblemType), nullable=False)
     answer = Column(String(50), nullable=False)
     created_at = Column(DateTime, server_default=func.now())
-
     category_id = Column(Integer, ForeignKey("categories.id"))
     category = relationship("Category")
+    embedding = relationship("Embedding", back_populates="problem", uselist=False, cascade="all, delete-orphan")
