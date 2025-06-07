@@ -1,9 +1,10 @@
 from app.models.problem import Problem
+from app.models.embedding import Embedding
 from app.schemas.problem import ProblemCreate
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.category import Category
 from app.models.problem import Problem
-from sqlalchemy import select, func
+from sqlalchemy import select, func, insert
 from sqlalchemy.sql import text
 import ast
 
@@ -57,11 +58,19 @@ async def get_mock_exam_by_category_path(db, path: list[str], count: int):
     return result.scalars().all()
 
 
-# 문제 유사도 제한
-SIMILARITY_THRESHOLD = 0.9
+async def save_embedding(db: AsyncSession, problem_id: int, embedding: list[float]) -> None:
+    stmt = insert(Embedding).values(problem_id=problem_id, vector=embedding)
+    await db.execute(stmt)
+    await db.commit()
 
-async def is_similar_problem_exist(db: AsyncSession, category_id: int, new_embedding: list[float]) -> bool:
-    # PostgreSQL의 vector 연산을 위해 문자열로 벡터 표현
+
+async def get_similar_problem(
+    db: AsyncSession,
+    category_id: int,
+    new_embedding: list[float],
+    threshold: float
+) -> dict | None:
+    from sqlalchemy.sql import text
     vector_str = f"'[{','.join(map(str, new_embedding))}]'::vector"
 
     stmt = text(f"""
@@ -75,15 +84,17 @@ async def is_similar_problem_exist(db: AsyncSession, category_id: int, new_embed
 
     result = await db.execute(stmt)
     row = result.first()
-
     if row is None:
-        return False  # 비교 대상 없음
-    
-    stored_vector = ast.literal_eval(row.vector)  # 문자열 → 리스트
-    stored_vector = list(map(float, stored_vector))  # 리스트 요소를 float으로 변환
+        return None
 
-    similarity = 1 - vector_distance(stored_vector, new_embedding)
-    return similarity >= SIMILARITY_THRESHOLD
+    stored_vector = list(map(float, ast.literal_eval(row.vector)))
+    dot = sum(a * b for a, b in zip(new_embedding, stored_vector))
+    norm = lambda v: sum(x ** 2 for x in v) ** 0.5
+    similarity = dot / (norm(new_embedding) * norm(stored_vector))
+
+    if similarity >= threshold:
+        return {"id": row.id, "content": row.content, "similarity": round(similarity, 4)}
+    return None
 
 
 def vector_distance(vec1, vec2) -> float:
