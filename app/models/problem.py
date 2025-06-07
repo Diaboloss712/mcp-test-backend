@@ -15,10 +15,9 @@ class Problem(Base):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String(100), nullable=False)
     content = Column(Text, nullable=False)
-    embedding = Column(Vector(1024))
     type = Column(SqlEnum(ProblemType), nullable=False)
     answer = Column(String(50), nullable=False)
     created_at = Column(DateTime, server_default=func.now())
-
     category_id = Column(Integer, ForeignKey("categories.id"))
     category = relationship("Category")
+    embedding = relationship("Embedding", back_populates="problem", uselist=False, cascade="all, delete-orphan")

@@ -6,6 +6,7 @@ Authlib==1.5.2
 bcrypt==4.3.0
 certifi==2025.4.26
 cffi==1.17.1
+charset-normalizer==3.4.2
 click==8.1.8
 colorama==0.4.6
 cryptography==44.0.3
@@ -42,6 +43,7 @@ python-dotenv==1.1.0
 python-jose==3.4.0
 python-multipart==0.0.20
 qrcode==8.2
+requests==2.32.3
 rich==14.0.0
 rsa==4.9.1
 shellingham==1.5.4
@@ -54,5 +56,6 @@ starlette==0.46.2
 typer==0.15.3
 typing-inspection==0.4.0
 typing_extensions==4.13.2
+urllib3==2.4.0
 uvicorn==0.34.2
 websockets==15.0.1

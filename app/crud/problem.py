@@ -5,6 +5,7 @@ from app.models.category import Category
 from app.models.problem import Problem
 from sqlalchemy import select, func
 from sqlalchemy.sql import text
+import ast
 
 
 # 새로운 문제를 DB에 저장 
@@ -60,32 +61,32 @@ async def get_mock_exam_by_category_path(db, path: list[str], count: int):
 SIMILARITY_THRESHOLD = 0.9
 
 async def is_similar_problem_exist(db: AsyncSession, category_id: int, new_embedding: list[float]) -> bool:
-    # pgvector 유사도 검색 쿼리
+    # PostgreSQL의 vector 연산을 위해 문자열로 벡터 표현
+    vector_str = f"'[{','.join(map(str, new_embedding))}]'::vector"
+
     stmt = text(f"""
-        SELECT id, content, embedding
-        FROM problems
-        WHERE category_id = :category_id
-        AND embedding IS NOT NULL
-        ORDER BY embedding <-> :embedding
+        SELECT p.id, p.content, e.vector
+        FROM problems p
+        JOIN embeddings e ON p.id = e.problem_id
+        WHERE p.category_id = :category_id
+        ORDER BY e.vector <-> {vector_str}
         LIMIT 1
-    """).bindparams(
-        category_id=category_id,
-        embedding=new_embedding
-    )
+    """).bindparams(category_id=category_id)
 
     result = await db.execute(stmt)
     row = result.first()
 
     if row is None:
         return False  # 비교 대상 없음
+    
+    stored_vector = ast.literal_eval(row.vector)  # 문자열 → 리스트
+    stored_vector = list(map(float, stored_vector))  # 리스트 요소를 float으로 변환
 
-    # 코사인 유사도 계산 (1 - 거리)
-    similarity = 1 - vector_distance(row.embedding, new_embedding)
+    similarity = 1 - vector_distance(stored_vector, new_embedding)
     return similarity >= SIMILARITY_THRESHOLD
 
 
 def vector_distance(vec1, vec2) -> float:
-    """단순 Python 수준 거리 계산 (백업용, 실제 DB 거리와 같게 맞추기 위함)"""
     from math import sqrt
     dot = sum(a * b for a, b in zip(vec1, vec2))
     norm1 = sqrt(sum(a * a for a in vec1))
