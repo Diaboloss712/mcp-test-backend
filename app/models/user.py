@@ -1,18 +1,18 @@
-from sqlmodel import SQLModel, Field
-from typing import Optional
-from datetime import datetime
+# app/models/user.py
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, func
+from app.db.base import Base
 
-
-class User(SQLModel, table=True):
+class User(Base):
     __tablename__ = "users"
 
-    id: Optional[int] = Field(default=None, primary_key=True)
-    username: str = Field(max_length=30, nullable=False, unique=True)
-    email: str = Field(max_length=100, nullable=False, unique=True)
-    password: Optional[str] = Field(default=None, nullable=True)
-    is_admin: bool = Field(default=False)
-    provider: Optional[str] = Field(default=None, nullable=True)
-    created_at: datetime = Field(default_factory=datetime.now, nullable=False)
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String(30), nullable=False, unique=True)
+    email = Column(String(100), nullable=False, unique=True)
+    password = Column(String, nullable=True)
+    provider = Column(String, nullable=True)
+    is_admin = Column(Boolean, default=False)
+    created_at = Column(DateTime, server_default=func.now())
+
 
     # 아래는 외래키
     # problems: List["Problem"] = Relationship(back_populates="created_by_user")
