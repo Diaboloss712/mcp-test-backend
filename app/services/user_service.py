@@ -10,8 +10,10 @@ from app.crud.user import (
     create_user,
     update_user_fields
 )
-from sqlmodel.ext.asyncio.session import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 import httpx
+
 
 async def login_service(form_data, db: AsyncSession):
     user = await authenticate_user(db, form_data.username, form_data.password)
@@ -36,7 +38,12 @@ async def social_login_service(payload: UserSocialCreate, db: AsyncSession):
 
     user = await get_user_by_email(db, email)
     if not user:
-        raise HTTPException(status_code=404, detail="User not registered")
+        raise HTTPException(status_code=404,
+                            detail={
+            "message": "User not registered",
+            "email": email,
+            "provider": payload.provider
+        })
 
     return {"access_token": create_access_token({"sub": user.id, "username": user.username})}
 
@@ -88,7 +95,8 @@ async def get_profile_service(user: User):
 
 
 async def _fetch_token(config: dict, code: str, provider: str) -> dict:
-    redirect_uri = f"http://localhost:5173/callback?provider={provider}"
+    redirect_uri = config["redirect_uri"]
+
     async with httpx.AsyncClient() as client:
         res = await client.post(
             config["token_url"],
@@ -101,8 +109,11 @@ async def _fetch_token(config: dict, code: str, provider: str) -> dict:
             },
             headers={"Content-Type": "application/x-www-form-urlencoded"},
         )
-    if res.status_code != 200:
-        raise HTTPException(status_code=400, detail="토큰 요청 실패")
+
+    # if res.status_code != 200:
+    #     print("OAuth 토큰 요청 실패:", res.status_code, res.text)
+    #     raise HTTPException(status_code=400, detail=res.json())
+
     return res.json()
 
 

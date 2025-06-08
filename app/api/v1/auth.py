@@ -2,10 +2,10 @@ import os
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from authlib.integrations.starlette_client import OAuth
 from starlette.config import Config
-from sqlmodel.ext.asyncio.session import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.oauth2_providers import PROVIDER_CONFIGS
 from app.core.security import ALGORITHM, create_access_token, create_reset_password_token, hash_password, send_email
-from app.crud.user import get_user_by_email
+from app.crud.user import get_user_by_email, update_user_fields
 from app.db.session import get_db
 from jose import JWTError, jwt
 
@@ -72,7 +72,7 @@ async def forgot_password(
         token = create_reset_password_token(email)
         reset_link = f"https://yourdomain.com/reset-password?token={token}"
         await send_email(email, reset_link)
-    except Exception as err:
+    except Exception:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
     return {"msg": "Reset link sent"}
 
@@ -88,7 +88,5 @@ async def reset_password(token: str, new_password: str, db: AsyncSession = Depen
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    user.hashed_password = hash_password(new_password)
-    db.add(user)
-    await db.commit()
+    await update_user_fields(user, {"password": hash_password(new_password)}, db)
     return {"msg": "Password has been reset"}

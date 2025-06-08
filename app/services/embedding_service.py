@@ -4,13 +4,11 @@ import json
 import http.client
 import httpx
 import numpy as np
-from dotenv import load_dotenv
 from app.models.embedding import Embedding
 from app.models.problem import Problem
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
-load_dotenv()
 
 CLOVA_API_KEY = os.getenv('CLOVA_API_KEY')
 CLOVA_API_HOST = "https://clovastudio.stream.ntruss.com"
