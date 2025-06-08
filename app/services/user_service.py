@@ -110,10 +110,6 @@ async def _fetch_token(config: dict, code: str, provider: str) -> dict:
             headers={"Content-Type": "application/x-www-form-urlencoded"},
         )
 
-    # if res.status_code != 200:
-    #     print("OAuth 토큰 요청 실패:", res.status_code, res.text)
-    #     raise HTTPException(status_code=400, detail=res.json())
-
     return res.json()
 
 
