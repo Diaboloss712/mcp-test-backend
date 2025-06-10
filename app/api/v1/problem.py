@@ -14,11 +14,11 @@ from app.crud.problem import (
 )
 
 
-router = APIRouter(prefix="/api/v1/problems", tags=["Problems"])
+router = APIRouter(tags=["Problems"])
 
 @router.post("/generate_problem", response_model=ProblemOut)
 async def generate_problem(prompt: ProblemPrompt, db: AsyncSession = Depends(get_db)):
-    return await generate_problem_from_prompt(prompt.prompt, db)
+    return await generate_problem_from_prompt(prompt.prompt, db, prompt.llm)
 
 @router.get("/mock_exam_by_title", response_model=list[ProblemOut])
 async def mock_exam_by_title(

@@ -3,7 +3,7 @@ import httpx
 
 MCP_SERVER_URL = "http://localhost:11500/call"  # FastMCP 서버 주소
 
-async def call_llm_generate_problem(prompt: str, llm: str = "hyperclova") -> dict:
+async def call_llm_generate_problem(prompt: str, llm: str) -> dict:
     """
     MCP 서버에 prompt와 원하는 LLM을 전달하여 문제 데이터를 받아옵니다.
     

@@ -10,7 +10,7 @@ from app.db.session import get_db
 SIMILARITY_THRESHOLD = 0.7
 MAX_RETRIES = 5
 
-async def generate_problem_from_prompt(prompt: str, db: AsyncSession) -> ProblemOut:
+async def generate_problem_from_prompt(prompt: str, db: AsyncSession, llm: str,) -> ProblemOut:
     previous_attempts: list[dict] = []
 
     for _ in range(MAX_RETRIES):
@@ -29,7 +29,7 @@ async def generate_problem_from_prompt(prompt: str, db: AsyncSession) -> Problem
             augmented_prompt = prompt
 
         # 2. 문제 생성
-        llm_response = await call_llm_generate_problem(augmented_prompt)
+        llm_response = await call_llm_generate_problem(augmented_prompt, llm=llm)
 
         # 3. 카테고리 생성/탐색
         category = await get_or_create_category(db, llm_response["category"])

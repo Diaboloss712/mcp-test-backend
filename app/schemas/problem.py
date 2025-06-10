@@ -1,4 +1,5 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+from typing import Literal
 from enum import Enum
 
 
@@ -10,6 +11,7 @@ class ProblemType(str, Enum):
 # 요청 스키마
 class ProblemPrompt(BaseModel):
     prompt: str
+    llm: Literal["ollama", "chatgpt", "hyperclova"] = Field(default="ollama", description="사용할 LLM 종류")
 
 # 응답 스키마
 class ProblemOut(BaseModel):
