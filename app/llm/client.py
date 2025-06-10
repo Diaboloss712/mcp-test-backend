@@ -1,23 +1,42 @@
 import asyncio
 import httpx
 
-MCP_SERVER_URL = "http://localhost:11500/call"  # FastMCP SSE 서버 주소
+MCP_SERVER_URL = "http://localhost:11500/call"  # FastMCP 서버 주소
 
-async def call_llm_generate_problem(prompt: str) -> dict:
+async def call_llm_generate_problem(prompt: str, llm: str = "hyperclova") -> dict:
     """
-    FastMCP SSE 서버에 prompt를 전달하여 문제 데이터를 받아옵니다.
+    MCP 서버에 prompt와 원하는 LLM을 전달하여 문제 데이터를 받아옵니다.
+    
+    Parameters:
+    - prompt (str): 문제 생성 요청 프롬프트
+    - llm (str): 사용할 LLM 이름 ('ollama', 'chatgpt', 'hyperclova')
+
+    Returns:
+    - dict: 생성된 문제 정보
     """
     async with httpx.AsyncClient(timeout=60.0) as client:
         response = await client.post(
             MCP_SERVER_URL,
             json={
                 "tool": "generate_problem",
-                "input": {"prompt": prompt}
+                "input": {
+                    "prompt": prompt,
+                    "llm": llm
+                }
             },
             headers={"accept": "application/json"}
         )
         response.raise_for_status()
         return response.json()["output"]
+
+# 사용 예시
+if __name__ == "__main__":
+    prompt_text = "Create a multiple choice question about deep learning optimizers."
+    llm_name = "ollama"  # 또는 "chatgpt", "hyperclova"
+
+    result = asyncio.run(call_llm_generate_problem(prompt_text, llm=llm_name))
+    print(result)
+
 
 '''
 프롬프트 예시 
