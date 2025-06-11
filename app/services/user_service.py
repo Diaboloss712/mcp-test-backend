@@ -5,6 +5,7 @@ from app.core.oauth2_config import PROVIDER_CONFIG
 from app.models.user import User
 from app.schemas.user import UserCreate, UserUpdate, UserSocialCreate
 from app.crud.user import (
+    get_user_by_email_and_provider,
     get_user_by_username,
     get_user_by_email,
     create_user,
@@ -36,14 +37,16 @@ async def social_login_service(payload: UserSocialCreate, db: AsyncSession):
     if not email:
         raise HTTPException(status_code=400, detail="이메일 없음")
 
-    user = await get_user_by_email(db, email)
+    user = await get_user_by_email_and_provider(db, email, payload.provider)
     if not user:
-        raise HTTPException(status_code=404,
-                            detail={
-            "message": "User not registered",
-            "email": email,
-            "provider": payload.provider
-        })
+        raise HTTPException(
+            status_code=404,
+            detail={
+                "message": "User not registered",
+                "email": email,
+                "provider": payload.provider
+            }
+        )
 
     return {"access_token": create_access_token({"sub": user.id, "username": user.username})}
 
