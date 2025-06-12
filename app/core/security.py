@@ -24,7 +24,7 @@ PASSWORD=os.getenv("SMTP_PASSWORD")
 EMAIL_SENDER=os.getenv("EMAIL_SENDER")
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/users/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
 
 def hash_password(password: str) -> str:
     return pwd_context.hash(password)
