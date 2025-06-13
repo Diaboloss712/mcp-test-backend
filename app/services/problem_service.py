@@ -4,7 +4,6 @@ from app.crud.problem import create_problem, save_embedding, get_similar_problem
 from app.services.embedding_service import get_embedding_from_clova
 from app.crud.category import get_or_create_category
 from sqlmodel.ext.asyncio.session import AsyncSession
-from app.db.session import get_db
 
 
 SIMILARITY_THRESHOLD = 0.7
