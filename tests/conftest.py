@@ -6,11 +6,13 @@ from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 from httpx import AsyncClient
 from httpx._transports.asgi import ASGITransport
 from asgi_lifespan import LifespanManager
+from app.db.base import Base
+import app.db.session as session_module
 
 from app.main import app
-from app.db.session import get_db as app_get_db
+from app.db.session import get_db as app_get_db, init_engine
 
-DATABASE_URL = os.getenv("DATABASE_URL")
+DATABASE_URL = os.getenv("DATABASE_TEST_URL")
 
 @pytest.fixture(scope="session")
 def anyio_backend():
@@ -29,6 +31,10 @@ async def engine():
     yield test_engine
     await test_engine.dispose()
 
+@pytest.fixture(scope="function", autouse=True)
+async def override_engine(engine):
+    init_engine(engine)
+
 @pytest.fixture(scope="function")
 async def session_factory(engine):
     return async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
@@ -36,8 +42,8 @@ async def session_factory(engine):
 @pytest.fixture(scope="function")
 async def clean_db(engine):
     async with engine.begin() as conn:
-        await conn.run_sync(SQLModel.metadata.drop_all)
-        await conn.run_sync(SQLModel.metadata.create_all)
+        await conn.run_sync(Base.metadata.drop_all)
+        await conn.run_sync(Base.metadata.create_all)
 
 @pytest.fixture(scope="function")
 async def db_session(clean_db, session_factory):

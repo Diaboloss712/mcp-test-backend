@@ -1,9 +1,9 @@
-from sqlmodel import SQLModel
+from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional, Literal
 
 
-class UserBase(SQLModel):
+class UserBase(BaseModel):
     username: str
     email: str
 
@@ -19,15 +19,18 @@ class UserRead(UserBase):
     provider: Optional[str]
     created_at: datetime
 
-class UserUpdate(SQLModel):
+    class Config:
+        orm_mode = True  # SQLAlchemy 모델 → Pydantic 변환 시 필요
+
+class UserUpdate(BaseModel):
     username: Optional[str] = None
     email: Optional[str] = None
     password: Optional[str] = None
 
-class Token(SQLModel):
+class Token(BaseModel):
     access_token: str
     token_type: str
 
-class OAuthCode(SQLModel):
+class OAuthCode(BaseModel):
     provider: str
     code: str

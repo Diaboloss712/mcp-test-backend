@@ -1,7 +1,5 @@
 import os
-from dotenv import load_dotenv
 
-load_dotenv()
 
 PROVIDER_CONFIG = {
     "google": {
@@ -9,6 +7,7 @@ PROVIDER_CONFIG = {
         "userinfo_url": "https://www.googleapis.com/oauth2/v2/userinfo",
         "client_id": os.getenv("GOOGLE_CLIENT_ID"),
         "client_secret": os.getenv("GOOGLE_CLIENT_SECRET"),
+        "redirect_uri": "http://localhost:5173/callback",
     },
     "github": {
         "token_url": "https://github.com/login/oauth/access_token",
