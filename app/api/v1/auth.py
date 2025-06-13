@@ -1,14 +1,26 @@
 import os
-from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi import APIRouter, Body, Depends, HTTPException, status
 from authlib.integrations.starlette_client import OAuth
+from fastapi.security import OAuth2PasswordRequestForm
 from starlette.config import Config
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.oauth2_providers import PROVIDER_CONFIGS
-from app.core.security import ALGORITHM, create_access_token, create_reset_password_token, hash_password, send_email
+from app.core.security import ALGORITHM, create_reset_password_token, hash_password, send_email
 from app.crud.user import get_user_by_email, update_user_fields
 from app.db.session import get_db
 from jose import JWTError, jwt
 
+from app.schemas.user import OAuthCode
+from app.schemas.user import (
+    UserCreate, UserRead, UserSocialCreate
+)
+from app.services.auth_service import (
+    login_service,
+    social_login_service,
+    register_user_service,
+    register_user_from_social_info
+)
+from app.schemas.user import Token, OAuthCode
 FORGET_PWD_SECRET_KEY = os.getenv("FORGET_PWD_SECRET_KEY")
 
 router = APIRouter()
@@ -23,42 +35,25 @@ for provider_name, provider_conf in PROVIDER_CONFIGS.items():
         **provider_conf
     )
 
-@router.get("/login/{provider}")
-async def login(request: Request, provider: str):
-    client = getattr(oauth, provider)
-    redirect_uri = request.url_for("auth", provider=provider)
-    return await client.authorize_redirect(request, redirect_uri)
+@router.post("/login", response_model=Token)
+async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db)):
+    return await login_service(form_data, db)
 
-@router.get("/auth/{provider}", name="auth")
-async def auth(
-    request: Request,
-    provider: str,
-    db: AsyncSession = Depends(get_db),
-):
-    client = getattr(oauth, provider)
-    token = await client.authorize_access_token(request)
+@router.post("/social-login")
+async def social_login(payload: OAuthCode = Body(...), db: AsyncSession = Depends(get_db)):
+    return await social_login_service(payload, db)
 
-    if provider.lower() == "google":
-        user_info = await client.parse_id_token(request, token)
-    else:
-        user_info = token.get("userinfo") or await client.userinfo(request, token=token)
+@router.post("/register",
+    status_code=status.HTTP_201_CREATED,
+    response_model=UserRead,)
+async def register(user: UserCreate, db: AsyncSession = Depends(get_db)):
+    return await register_user_service(user, db)
 
-    email = user_info.get("email")
-    if not email:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                            detail="Email not provided by provider")
-
-    user = await get_user_by_email(db, email)
-    if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-                            detail="User not registered")
-
-    access_token = create_access_token({
-        "user_id": str(user.id),
-        "provider": provider,
-        "email": user.email
-    })
-    return {"access_token": access_token, "token_type": "bearer"}
+@router.post("/social-register",
+    status_code=status.HTTP_201_CREATED,
+    response_model=UserRead,)
+async def social_register(user: UserSocialCreate, db: AsyncSession = Depends(get_db)):
+    return await register_user_from_social_info(user, db)
 
 @router.post("/forgot-password", name="forgot-password")
 async def forgot_password(
