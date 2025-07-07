@@ -24,4 +24,5 @@ jobs:
       with:
         context: .
         push: true
-        tags: ghcr.io/diaboloss712/myapp:latest
+        tags: ghcr.io/diaboloss712/mcp-test-backend:latest
+
