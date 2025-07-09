@@ -1,6 +1,6 @@
 from typing import List
 from sqlalchemy import Column, Integer, String, ForeignKey, Text, DateTime, Enum as SqlEnum, func
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import Mapped, relationship
 from app.db.base import Base
 import enum
 
@@ -23,4 +23,4 @@ class Problem(Base):
     category_id = Column(Integer, ForeignKey("categories.id"))
     category = relationship("Category")
     embedding = relationship("Embedding", back_populates="problem", uselist=False, cascade="all, delete-orphan")
-    solved_users: List["UserProblem"] = relationship(back_populates="problem")
+    solved_users: Mapped[List["User"]] = relationship(back_populates="solved_problems")
