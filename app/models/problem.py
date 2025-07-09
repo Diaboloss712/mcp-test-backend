@@ -23,4 +23,8 @@ class Problem(Base):
     category_id = Column(Integer, ForeignKey("categories.id"))
     category = relationship("Category")
     embedding = relationship("Embedding", back_populates="problem", uselist=False, cascade="all, delete-orphan")
-    solved_users: Mapped[List["User"]] = relationship(back_populates="solved_problems")
+    
+    user_problem_records: Mapped[List["UserProblem"]] = relationship(
+        back_populates="problem", cascade="all, delete-orphan"
+    )
+    # solved_users: Mapped[List["User"]] = relationship(back_populates="solved_problems")

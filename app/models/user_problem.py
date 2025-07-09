@@ -17,4 +17,5 @@ class UserProblem(Base):
     attempt_number = Column(Integer, default=1)
 
     user = relationship("User", back_populates="solved_problems")
-    problem = relationship("Problem", back_populates="solved_users")
+    problem = relationship("Problem", back_populates="user_problem_records")       # 이름 변경
+    # problem = relationship("Problem", back_populates="solved_users")

@@ -73,7 +73,7 @@ async def create_exam(req: ExamCreateRequest, db: AsyncSession = Depends(get_db)
         db.add(ExamProblem(
             exam_id=new_exam.id,
             problem_id=problem.id,
-            order=idx
+            problem_order=idx
         ))
 
     await db.commit()
@@ -91,7 +91,7 @@ async def create_exam(req: ExamCreateRequest, db: AsyncSession = Depends(get_db)
 
 
 @router.post("/exams/{exam_id}/submit", response_model=ExamSubmitResponse)
-def submit_exam(exam_id: int, answers: List[UserAnswer], db: Session = Depends(get_db)):
+def submit_exam(exam_id: int, answers: list[UserAnswer], db: Session = Depends(get_db)):
     exam = db.query(Exam).filter(Exam.id == exam_id).first()
     if not exam:
         raise HTTPException(status_code=404, detail="Exam not found")
