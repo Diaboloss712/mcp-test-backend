@@ -1,10 +1,12 @@
 # app/models/user.py
-from typing import List
+from typing import List, TYPE_CHECKING
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, func
 from sqlalchemy.orm import relationship
 from app.db.base import Base
 from app.models.user_problem import UserProblem
-from app.models.comment import Comment
+
+if TYPE_CHECKING:
+    from app.models.comment import Comment
 
 class User(Base):
     __tablename__ = "users"

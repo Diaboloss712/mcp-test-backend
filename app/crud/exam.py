@@ -1,5 +1,4 @@
 from sqlalchemy.orm import Session
-from sqlalchemy.sql import func
 from app.models.exam import Exam, ExamProblem
 from app.models.problem import Problem
 from app.utils.exam_hash import hash_problem_ids
