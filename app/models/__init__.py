@@ -3,3 +3,7 @@
 from .user import User
 from .comment import Comment
 from .user_problem import UserProblem
+from .category import Category
+from .embedding import Embedding
+from .exam import Exam, ExamProblem
+from .problem import Problem, ProblemType
