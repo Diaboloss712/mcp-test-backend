@@ -23,7 +23,7 @@ async def get_or_create_category(db: AsyncSession, path: str) -> Category:
         )
 
         result = await db.execute(stmt)
-        current = result.scalar_one_or_none()
+        current = result.scalars().first()
 
         if not current:
             try:

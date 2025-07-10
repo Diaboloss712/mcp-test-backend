@@ -73,7 +73,7 @@ async def create_exam(req: ExamCreateRequest, db: AsyncSession = Depends(get_db)
         db.add(ExamProblem(
             exam_id=new_exam.id,
             problem_id=problem.id,
-            order=idx
+            problem_order=idx
         ))
 
     await db.commit()

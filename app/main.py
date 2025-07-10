@@ -59,8 +59,8 @@ app.include_router(auth.router, prefix="/api/v1/auth", tags=["Auth"])
 app.include_router(problem.router, prefix="/api/v1/problems", tags=["Problems"])
 app.include_router(category.router, prefix="/api/v1/categories", tags=["Categories"])
 app.include_router(embedding.router, prefix="/api/v1/embedding", tags=["Embedding"])
-app.include_router(exam.router, prefix="/api/v1/exams", tags=["Exam"])
-cd
+app.include_router(exam.router, prefix="/api/v1/exam", tags=["Exams"])
+
 # app.include_router(comment.router, prefix="/api/v1/comments", tags=["Comments"])
 # app.include_router(review.router, prefix="/api/v1/review", tags=["Review"])
 
