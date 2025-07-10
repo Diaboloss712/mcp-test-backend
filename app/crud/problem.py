@@ -4,6 +4,7 @@ from app.schemas.problem import ProblemCreate
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.category import Category
 from app.models.problem import Problem
+from app.core.pinecone_client import pinecone_index
 from sqlalchemy import select, func, insert
 from sqlalchemy.sql import text
 import ast
@@ -58,50 +59,30 @@ async def get_mock_exam_by_category_path(db, path: list[str], count: int):
     return result.scalars().all()
 
 
-async def save_embedding(db: AsyncSession, problem_id: int, embedding: list[float]) -> None:
-    stmt = insert(Embedding).values(problem_id=problem_id, vector=embedding)
-    await db.execute(stmt)
-    await db.commit()
+async def save_embedding(problem_id: int, embedding: list[float], metadata: dict = None) -> None:
+    pinecone_index.upsert(
+        vectors=[{
+            "id": str(problem_id),  # Pinecone은 ID를 문자열로 받습니다.
+            "values": embedding,
+            "metadata": metadata or {}
+        }]
+    )
 
 
 async def get_similar_problem(
-    db: AsyncSession,
-    category_id: int,
     new_embedding: list[float],
-    threshold: float
+    threshold: float = 0.8,
+    top_k: int = 3
 ) -> dict | None:
-    from sqlalchemy.sql import text
-    vector_str = f"'[{','.join(map(str, new_embedding))}]'::vector"
-
-    stmt = text(f"""
-        SELECT p.id, p.content, e.vector
-        FROM problems p
-        JOIN embeddings e ON p.id = e.problem_id
-        WHERE p.category_id = :category_id
-        ORDER BY e.vector <-> {vector_str}
-        LIMIT 1
-    """).bindparams(category_id=category_id)
-
-    result = await db.execute(stmt)
-    row = result.first()
-    if row is None:
+    result = pinecone_index.query(vector=new_embedding, top_k=top_k, include_metadata=True)
+    if not result.matches:
         return None
 
-    stored_vector = list(map(float, ast.literal_eval(row.vector)))
-    dot = sum(a * b for a, b in zip(new_embedding, stored_vector))
-    norm = lambda v: sum(x ** 2 for x in v) ** 0.5
-    similarity = dot / (norm(new_embedding) * norm(stored_vector))
-
-    if similarity >= threshold:
-        return {"id": row.id, "content": row.content, "similarity": round(similarity, 4)}
+    top = result.matches[0]
+    if top.score >= threshold:
+        return {
+            "id": top.id,
+            "similarity": round(top.score, 4),
+            "metadata": top.metadata
+        }
     return None
-
-
-def vector_distance(vec1, vec2) -> float:
-    from math import sqrt
-    dot = sum(a * b for a, b in zip(vec1, vec2))
-    norm1 = sqrt(sum(a * a for a in vec1))
-    norm2 = sqrt(sum(b * b for b in vec2))
-    if norm1 == 0 or norm2 == 0:
-        return 1.0  # 무조건 멀다
-    return 1 - dot / (norm1 * norm2)
