@@ -1,13 +1,13 @@
 # app/core/pinecone_client.py
+
 import os
-import pinecone
-from dotenv import load_dotenv
+from pinecone import Pinecone, ServerlessSpec
 
-load_dotenv()
+# Pinecone 인스턴스 생성
+pc = Pinecone(api_key=os.environ.get("PINECONE_API_KEY"))
 
-pinecone.init(
-    api_key=os.getenv("PINECONE_API_KEY"),
-    environment=os.getenv("PINECONE_ENV")
-)
+# 인덱스 이름은 .env에 저장해두었거나 하드코딩 가능
+PINECONE_INDEX_NAME = os.getenv("PINECONE_INDEX_NAME", "mcp-index")
 
-index = pinecone.Index(os.getenv("PINECONE_INDEX_NAME"))
+# 인덱스 객체 가져오기
+pinecone_index = pc.Index(PINECONE_INDEX_NAME)

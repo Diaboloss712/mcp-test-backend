@@ -1,6 +1,5 @@
-from sqlalchemy import Column, Integer, ForeignKey
+from sqlalchemy import Column, Integer, ForeignKey, String
 from sqlalchemy.orm import relationship
-from pgvector.sqlalchemy import Vector
 from app.db.base import Base
 
 class Embedding(Base):
@@ -8,6 +7,6 @@ class Embedding(Base):
 
     id = Column(Integer, primary_key=True)
     problem_id = Column(Integer, ForeignKey("problems.id"), unique=True, nullable=False)
-    # vector = Column(Vector(1024), nullable=False) 앞으로 pgvector가 아닌 pinecone에서 vectorDB 담당
+    pinecone_id = Column(String, nullable=False)  # 일반적으로 str(problem_id)
 
     problem = relationship("Problem", back_populates="embedding")

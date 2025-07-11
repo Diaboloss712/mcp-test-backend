@@ -1,7 +1,8 @@
 from app.models.embedding import Embedding
 from app.core.pinecone_client import pinecone_index
+from sqlalchemy.ext.asyncio import AsyncSession
 
-async def save_embedding(problem_id: int, embedding: list[float], metadata: dict = None) -> None:
+async def save_embedding(db: AsyncSession, problem_id: int, embedding: list[float], metadata: dict = None):
     pinecone_index.upsert([
         {
             "id": str(problem_id),
@@ -10,10 +11,9 @@ async def save_embedding(problem_id: int, embedding: list[float], metadata: dict
         }
     ])
 
-
-# async def save_embedding(db: AsyncSession, problem_id: int, vector: list[float]):
-#     embedding = Embedding(problem_id=problem_id, vector=vector)
-#     db.add(embedding)
-#     await db.commit()
-#     await db.refresh(embedding)
-#     return embedding
+    db.add(Embedding(
+        problem_id=problem_id,
+        pinecone_id=str(problem_id),
+        synced=True
+    ))
+    await db.commit()
