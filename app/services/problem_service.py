@@ -44,7 +44,7 @@ async def generate_problem_from_prompt(prompt: str, db: AsyncSession, llm: str,)
 
         # 5. 임베딩 + 유사도 검사
         embedding = await get_embedding_from_clova(problem_data.content)
-        similar = await get_similar_problem(db, category.id, embedding, threshold=SIMILARITY_THRESHOLD)
+        similar = await get_similar_problem(new_embedding=embedding, threshold=SIMILARITY_THRESHOLD, top_k=3)
 
         if similar:
             print(f"[SKIP] 유사 문제 존재: {similar['id']} - 유사도 {similar['similarity']}")
@@ -55,6 +55,8 @@ async def generate_problem_from_prompt(prompt: str, db: AsyncSession, llm: str,)
             continue
 
         # 6. 저장 성공
+        print("🔍 embedding 타입:", type(embedding))
+        print("🔍 embedding 샘플:", embedding[:5] if isinstance(embedding, list) else embedding)
         problem = await create_problem(db, problem_data)
         await save_embedding(db, problem.id, embedding)
         return ProblemOut.from_orm(problem)

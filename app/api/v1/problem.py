@@ -55,7 +55,7 @@ async def upload_problem_from_json(
 
     # 4. 유사도 검사
     threshold = 0.92
-    similar = await get_similar_problem(db, category.id, embedding, threshold)
+    similar = await get_similar_problem(embedding, threshold)
     if similar:
         raise HTTPException(
             status_code=409,

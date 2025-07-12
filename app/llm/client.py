@@ -1,7 +1,11 @@
+import os
 import asyncio
 import httpx
+from dotenv import load_dotenv
 
-MCP_SERVER_URL = "http://localhost:11500/call"  # FastMCP 서버 주소
+load_dotenv()
+
+MCP_SERVER_URL = os.getenv("MCP_SERVER_URL")
 
 async def call_llm_generate_problem(prompt: str, llm: str) -> dict:
     """

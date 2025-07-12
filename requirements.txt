@@ -30,9 +30,12 @@ mcp==1.7.1
 mdurl==0.1.2
 numpy==2.2.6
 openapi-pydantic==0.5.1
-packaging==25.0
+packaging==24.2
 passlib==1.7.4
 pgvector==0.4.1
+pinecone==7.3.0
+pinecone-plugin-assistant==1.7.0
+pinecone-plugin-interface==0.0.7
 pluggy==1.5.0
 psycopg2-binary==2.9.10
 pyasn1==0.4.8
@@ -42,6 +45,7 @@ pydantic-settings==2.9.1
 pydantic_core==2.33.2
 Pygments==2.19.1
 pytest==8.3.5
+python-dateutil==2.9.0.post0
 python-dotenv==1.1.0
 python-jose==3.4.0
 python-multipart==0.0.20
