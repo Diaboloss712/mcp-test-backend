@@ -3,7 +3,11 @@ from app.schemas.problem import ProblemCreate
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.category import Category
 from app.models.problem import Problem
-from sqlalchemy import select, func
+from app.core.pinecone_client import pinecone_index
+from sqlalchemy import select, func, insert
+from sqlalchemy.sql import text
+import ast
+
 
 # 새로운 문제를 DB에 저장 
 async def create_problem(db: AsyncSession, problem_data: ProblemCreate) -> Problem:
@@ -52,3 +56,22 @@ async def get_mock_exam_by_category_path(db, path: list[str], count: int):
     )
     result = await db.execute(stmt)
     return result.scalars().all()
+
+
+async def get_similar_problem(
+    new_embedding: list[float],
+    threshold: float = 0.8,
+    top_k: int = 3
+) -> dict | None:
+    result = pinecone_index.query(vector=new_embedding, top_k=top_k, include_metadata=True)
+    if not result.matches:
+        return None
+
+    top = result.matches[0]
+    if top.score >= threshold:
+        return {
+            "id": top.id,
+            "similarity": round(top.score, 4),
+            "metadata": top.metadata
+        }
+    return None
