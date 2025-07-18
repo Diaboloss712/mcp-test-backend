@@ -9,7 +9,6 @@ from app.crud.category import get_or_create_category
 from app.crud.problem import (
     create_problem,
     get_mock_exam_by_category_path,
-    save_embedding,
     get_similar_problem,
 )
 

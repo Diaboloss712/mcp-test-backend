@@ -11,7 +11,7 @@ class ProblemType(str, Enum):
 # 요청 스키마
 class ProblemPrompt(BaseModel):
     prompt: str
-    llm: Literal["ollama", "chatgpt", "hyperclova"] = Field(default="hyperclova", description="사용할 LLM 종류")
+    llm: Literal["ollama", "chatgpt", "hyperclova", "solar"] = Field(default="hyperclova", description="사용할 LLM 종류")
 
 # 응답 스키마
 class ProblemOut(BaseModel):

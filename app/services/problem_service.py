@@ -1,6 +1,7 @@
 from app.llm.client import call_llm_generate_problem
 from app.schemas.problem import ProblemOut, ProblemCreate
-from app.crud.problem import create_problem, save_embedding, get_similar_problem
+from app.crud.problem import create_problem, get_similar_problem
+from app.crud.embedding import save_embedding
 from app.services.embedding_service import get_embedding_from_clova
 from app.crud.category import get_or_create_category
 from sqlmodel.ext.asyncio.session import AsyncSession
@@ -55,8 +56,6 @@ async def generate_problem_from_prompt(prompt: str, db: AsyncSession, llm: str,)
             continue
 
         # 6. 저장 성공
-        print("🔍 embedding 타입:", type(embedding))
-        print("🔍 embedding 샘플:", embedding[:5] if isinstance(embedding, list) else embedding)
         problem = await create_problem(db, problem_data)
         await save_embedding(db, problem.id, embedding)
         return ProblemOut.from_orm(problem)

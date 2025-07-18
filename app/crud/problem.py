@@ -1,5 +1,4 @@
 from app.models.problem import Problem
-from app.models.embedding import Embedding
 from app.schemas.problem import ProblemCreate
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.category import Category
@@ -57,16 +56,6 @@ async def get_mock_exam_by_category_path(db, path: list[str], count: int):
     )
     result = await db.execute(stmt)
     return result.scalars().all()
-
-
-async def save_embedding(problem_id: int, embedding: list[float], metadata: dict = None) -> None:
-    pinecone_index.upsert(
-        vectors=[{
-            "id": str(problem_id),  # Pinecone은 ID를 문자열로 받습니다.
-            "values": embedding,
-            "metadata": metadata or {}
-        }]
-    )
 
 
 async def get_similar_problem(
